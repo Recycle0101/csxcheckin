@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Check-In CSX 值机系统 | CSX Check-In System</title>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121b2f;
+      --muted:#9fb0d0;
+      --text:#eaf0ff;
+      --accent:#5aa7ff;
+      --accent2:#7cffa7;
+      --danger:#ff5a7a;
+      --line: rgba(255,255,255,.10);
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC","Microsoft YaHei", Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(90,167,255,.24), transparent 55%),
+                  radial-gradient(1000px 600px at 90% 10%, rgba(124,255,167,.18), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px;
+    }
+    .wrap{max-width: 1100px; margin:0 auto}
+    header{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+      margin-bottom: 18px;
+    }
+    .title{display:flex; flex-direction:column; gap:6px;}
+    .title h1{margin:0;font-size:28px;letter-spacing:.3px}
+    .title .sub{color:var(--muted);font-size:13px;letter-spacing:.2px}
+    .badge{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns: 1fr} }
+    .panel{
+      background: rgba(18,27,47,.86);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .hd{
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .panel .hd .h{display:flex; flex-direction:column; gap:2px}
+    .panel .hd .h b{font-size: 14px}
+    .panel .hd .h span{font-size: 12px; color: var(--muted)}
+    .panel .bd{padding: 16px}
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 680px){ .form{grid-template-columns: 1fr} }
+    label{
+      display:flex; flex-direction:column; gap:6px;
+      font-size: 12px; color: var(--muted);
+    }
+    .labrow{
+      display:flex; justify-content:space-between; gap:10px;
+    }
+    .labrow .en{opacity:.8}
+    input, select{
+      width:100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      outline:none;
+      transition: .18s;
+    }
+    input:focus, select:focus{border-color: rgba(90,167,255,.55); box-shadow: 0 0 0 3px rgba(90,167,255,.18)}
+    .row2{grid-column: 1 / -1}
+    .hint{font-size: 12px; color: var(--muted); margin-top: 6px}
+    .warn{color: var(--danger)}
+    .ok{color: var(--accent2)}
+    .toggle{
+      display:flex; align-items:center; gap:10px;
+      padding: 12px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+    }
+    .toggle input{width:auto}
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px;
+    }
+    button{
+      border:none;
+      padding: 11px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      color: #06101f;
+      background: linear-gradient(135deg, var(--accent), #86c3ff);
+      font-weight: 700;
+      letter-spacing:.2px;
+    }
+    button.secondary{
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      font-weight: 600;
+    }
+    button:disabled{opacity:.55; cursor:not-allowed}
+    .preview{
+      padding: 14px 16px 16px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      overflow:hidden;
+    }
+    .card .top{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    }
+    .brand{display:flex; flex-direction:column; gap:3px;}
+    .brand b{font-size: 14px}
+    .brand span{font-size: 12px; color: var(--muted)}
+    .meta{
+      text-align:right;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .card .mid{
+      padding: 14px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+      align-items:stretch;
+    }
+    .kv{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .kv .item{
+      border:1px solid rgba(255,255,255,.09);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(0,0,0,.10);
+      min-height: 54px;
+    }
+    .kv .k{font-size: 11px; color: var(--muted)}
+    .kv .v{margin-top: 4px; font-size: 14px; letter-spacing:.2px}
+    .barcodeBox{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      background: rgba(0,0,0,.12);
+      padding: 10px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .codeLine{
+      display:flex; justify-content:space-between; gap:10px; align-items:center;
+      font-size: 12px; color: var(--muted);
+    }
+    .codeLine b{color: var(--text)}
+    canvas{width:100%; height:auto; background: #fff; border-radius: 10px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+    /* ===== PDF Export Boost (让导出颜色更接近网页、提升对比度) ===== */
+    #card.exporting{
+      background: rgba(18,27,47,.96) !important;
+      border-color: rgba(255,255,255,.16) !important;
+    }
+    #card.exporting .item{
+      background: rgba(0,0,0,.20) !important;
+      border-color: rgba(255,255,255,.14) !important;
+    }
+    #card.exporting .barcodeBox{
+      background: rgba(0,0,0,.22) !important;
+      border-color: rgba(255,255,255,.14) !important;
+    }
+    #card.exporting .k{
+      color: rgba(215,225,255,.75) !important;
+    }
+    #card.exporting .v{
+      color: rgba(255,255,255,.96) !important;
+    }
+  </style>
+
+  <!-- Barcode + PDF libs -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- Fix PDF Chinese garble: capture card as image -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <h1>Check-In 值机系统</h1>
+      <div class="sub">长沙黄花国际机场值机系统 / CSX Check-In System</div>
+    </div>
+    <div class="badge">
+      <span>中英双语 / Bilingual</span>
+      <span class="mono">A4 Landscape PDF</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Left: Form -->
+    <section class="panel">
+      <div class="hd">
+        <div class="h">
+          <b>旅客信息 / Passenger Information</b>
+          <span>填写后生成值机编号与条码，并可导出信息卡 PDF</span>
+        </div>
+        <div class="mono" id="nowTime"></div>
+      </div>
+
+      <div class="bd">
+        <div class="form">
+          <label>
+            <div class="labrow"><span>航班类型</span><span class="en">Flight Type</span></div>
+            <select id="flightType">
+              <option value="Domestic">国内 / Domestic</option>
+              <option value="International">国际 / International</option>
+            </select>
+          </label>
+
+          <label>
+            <div class="labrow"><span>姓名</span><span class="en">Name</span></div>
+            <input id="name" />
+          </label>
+
+          <label>
+            <div class="labrow"><span>证件类型</span><span class="en">Document Type</span></div>
+            <select id="docType">
+              <option value="ID Card">身份证 / ID Card</option>
+              <option value="Passport">护照 / Passport</option>
+              <option value="Home Return Permit">港澳通行证 / Home Return Permit</option>
+              <option value="Taiwan Compatriot Permit">台胞证 / Taiwan Compatriot Permit</option>
+              <option value="Other">其他 / Other</option>
+            </select>
+          </label>
+
+          <label>
+            <div class="labrow"><span>证件编号</span><span class="en">Document No.</span></div>
+            <input id="docNo" class="mono" />
+          </label>
+
+          <label class="row2">
+            <div class="labrow"><span>航司</span><span class="en">Airline</span></div>
+            <input id="airlineInput" list="airlines" />
+            <datalist id="airlines"></datalist>
+          </label>
+
+          <label>
+            <div class="labrow"><span>航班号</span><span class="en">Flight No.</span></div>
+            <input id="flightNo" class="mono" />
+          </label>
+
+          <label>
+            <div class="labrow"><span>座位号</span><span class="en">Seat</span></div>
+            <input id="seatNo" class="mono" />
+          </label>
+
+          <label>
+            <div class="labrow"><span>登机口</span><span class="en">Gate</span></div>
+            <input id="gate" class="mono" />
+          </label>
+
+          <label>
+            <div class="labrow"><span>航站楼</span><span class="en">Terminal</span></div>
+            <input id="terminal" class="mono" />
+          </label>
+
+          <div class="row2 toggle">
+            <input type="checkbox" id="baggageCheck" />
+            <div>
+              <div style="font-weight:700">行李托运 / Checked Baggage</div>
+              <div class="hint" style="margin:2px 0 0">标准行李额：23kg Standard Baggage Allowance: 23kg</div>
+            </div>
+          </div>
+
+          <label id="bagSizeWrap" style="display:none">
+            <div class="labrow"><span>行李尺寸</span><span class="en">Baggage Size</span></div>
+            <select id="bagSize">
+              <option value="Small">小 / Small</option>
+              <option value="Medium">中 / Medium</option>
+              <option value="Large">大 / Large</option>
+            </select>
+          </label>
+
+          <label id="bagWeightWrap" style="display:none">
+            <div class="labrow"><span>行李重量 (kg)</span><span class="en">Weight (kg)</span></div>
+            <input id="bagWeight" type="number" min="0" step="0.1" />
+            <div class="hint" id="weightHint">标准上限 23 kg / Standard limit 23 kg</div>
+          </label>
+
+          <div class="row2 actions">
+            <button id="genBtn">提交 / Submit</button>
+            <button id="pdfBtn" class="secondary" disabled>导出信息卡 PDF / Export PDF</button>
+            <button id="resetBtn" class="secondary">清空 / Reset</button>
+          </div>
+
+          <div class="row2 hint" id="formHint"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Preview -->
+    <section class="panel">
+      <div class="hd">
+        <div class="h">
+          <b>旅客信息卡 / Passenger Info Card</b>
+          <span>预览 Preview</span>
+        </div>
+        <div class="mono" id="status">READY</div>
+      </div>
+
+      <div class="preview">
+        <div class="card" id="card">
+          <div class="top">
+            <div class="brand">
+              <b>Check-In 值机系统</b>
+              <span>长沙黄花国际机场值机系统 / CSX Check-In System</span>
+            </div>
+            <div class="meta">
+              <div><span>常旅客卡编号 / ETKT ID No.</span></div>
+              <div class="mono" style="font-size:14px;color:var(--text)" id="checkinNo">—</div>
+              <div><span>生成时间 / Issued</span></div>
+              <div class="mono" id="issuedAt">—</div>
+            </div>
+          </div>
+
+          <div class="mid">
+            <div class="kv">
+              <div class="item">
+                <div class="k">航班类型 / Flight Type</div>
+                <div class="v" id="pvType">—</div>
+              </div>
+              <div class="item">
+                <div class="k">航司 / Airline</div>
+                <div class="v" id="pvAirline">—</div>
+              </div>
+
+              <div class="item">
+                <div class="k">航班号 / Flight No.</div>
+                <div class="v mono" id="pvFlightNo">—</div>
+              </div>
+              <div class="item">
+                <div class="k">姓名 / Name</div>
+                <div class="v" id="pvName">—</div>
+              </div>
+
+              <div class="item">
+                <div class="k">证件类型 / Document Type</div>
+                <div class="v" id="pvDocType">—</div>
+              </div>
+              <div class="item">
+                <div class="k">证件编号 / Document No.</div>
+                <div class="v mono" id="pvDocNo">—</div>
+              </div>
+
+              <div class="item">
+                <div class="k">座位号 / Seat</div>
+                <div class="v mono" id="pvSeat">—</div>
+              </div>
+              <div class="item">
+                <div class="k">登机口 / Gate</div>
+                <div class="v mono" id="pvGate">—</div>
+              </div>
+
+              <div class="item">
+                <div class="k">航站楼 / Terminal</div>
+                <div class="v mono" id="pvTerminal">—</div>
+              </div>
+              <div class="item">
+                <div class="k">行李托运 / Checked Baggage</div>
+                <div class="v" id="pvBag">—</div>
+              </div>
+            </div>
+
+            <div class="barcodeBox">
+              <div class="codeLine">
+                <span>条码内容 / Barcode Data</span>
+                <b class="mono" id="barcodeText">—</b>
+              </div>
+              <canvas id="barcodeCanvas"></canvas>
+              <div class="hint">
+                Code128 条码 / Code128 Barcode
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ===== Airlines dataset (主流覆盖版) =====
+  const airlinesData = [
+    // 中国大陆 Mainland China
+    { zh:"中国国际航空", en:"Air China", code:"CA" },
+    { zh:"中国东方航空", en:"China Eastern", code:"MU" },
+    { zh:"中国南方航空", en:"China Southern", code:"CZ" },
+    { zh:"厦门航空", en:"XiamenAir", code:"MF" },
+    { zh:"海南航空", en:"Hainan Airlines", code:"HU" },
+    { zh:"深圳航空", en:"Shenzhen Airlines", code:"ZH" },
+    { zh:"四川航空", en:"Sichuan Airlines", code:"3U" },
+    { zh:"山东航空", en:"Shandong Airlines", code:"SC" },
+    { zh:"吉祥航空", en:"Juneyao Air", code:"HO" },
+    { zh:"春秋航空", en:"Spring Airlines", code:"9C" },
+    { zh:"北京首都航空", en:"Beijing Capital Airlines", code:"JD" },
+    { zh:"天津航空", en:"Tianjin Airlines", code:"GS" },
+    { zh:"重庆航空", en:"Chongqing Airlines", code:"OQ" },
+    { zh:"上海航空", en:"Shanghai Airlines", code:"FM" },
+    { zh:"中国联合航空", en:"China United Airlines", code:"KN" },
+    { zh:"西藏航空", en:"Tibet Airlines", code:"TV" },
+    { zh:"祥鹏航空", en:"Lucky Air", code:"8L" },
+    { zh:"华夏航空", en:"China Express Airlines", code:"G5" },
+    { zh:"湖南航空", en:"Air Travel", code:"A6" },
+    { zh:"成都航空", en:"Chengdu Airlines", code:"EU" },
+    { zh:"昆明航空", en:"Kunming Airlines", code:"KY" },
+    { zh:"北部湾航空", en:"Beibu Gulf Airlines", code:"GX" },
+    { zh:"乌鲁木齐航空", en:"Urumqi Air", code:"UQ" },
+    { zh:"福州航空", en:"Fuzhou Airlines", code:"FU" },
+    { zh:"长安航空", en:"Chang An Airlines", code:"9H" },
+
+    // 港澳台 Hong Kong / Macau / Taiwan
+    { zh:"国泰航空", en:"Cathay Pacific", code:"CX" },
+    { zh:"香港航空", en:"Hong Kong Airlines", code:"HX" },
+    { zh:"香港快运", en:"HK Express", code:"UO" },
+    { zh:"澳门航空", en:"Air Macau", code:"NX" },
+    { zh:"中华航空", en:"China Airlines", code:"CI" },
+    { zh:"长荣航空", en:"EVA Air", code:"BR" },
+    { zh:"星宇航空", en:"STARLUX Airlines", code:"JX" },
+    { zh:"立荣航空", en:"UNI Air", code:"B7" },
+
+    // 日本 Japan
+    { zh:"日本航空", en:"Japan Airlines", code:"JL" },
+    { zh:"全日空", en:"ANA", code:"NH" },
+    { zh:"乐桃航空", en:"Peach Aviation", code:"MM" },
+    { zh:"捷星日本", en:"Jetstar Japan", code:"GK" },
+
+    // 韩国 Korea
+    { zh:"大韩航空", en:"Korean Air", code:"KE" },
+    { zh:"韩亚航空", en:"Asiana Airlines", code:"OZ" },
+    { zh:"济州航空", en:"Jeju Air", code:"7C" },
+    { zh:"真航空", en:"Jin Air", code:"LJ" },
+    { zh:"德威航空", en:"T'way Air", code:"TW" },
+
+    // 东南亚 SEA
+    { zh:"新加坡航空", en:"Singapore Airlines", code:"SQ" },
+    { zh:"酷航", en:"Scoot", code:"TR" },
+    { zh:"马来西亚航空", en:"Malaysia Airlines", code:"MH" },
+    { zh:"亚航（马来西亚）", en:"AirAsia", code:"AK" },
+    { zh:"印尼鹰航", en:"Garuda Indonesia", code:"GA" },
+    { zh:"狮航（印尼）", en:"Lion Air", code:"JT" },
+    { zh:"泰国国际航空", en:"Thai Airways", code:"TG" },
+    { zh:"越南航空", en:"Vietnam Airlines", code:"VN" },
+    { zh:"越捷航空", en:"VietJet Air", code:"VJ" },
+    { zh:"菲律宾航空", en:"Philippine Airlines", code:"PR" },
+    { zh:"宿务太平洋航空", en:"Cebu Pacific", code:"5J" },
+
+    // 印度 India
+    { zh:"印度航空", en:"Air India", code:"AI" },
+    { zh:"靛蓝航空", en:"IndiGo", code:"6E" },
+    { zh:"香料航空", en:"SpiceJet", code:"SG" },
+
+    // 澳新 ANZ
+    { zh:"澳洲航空", en:"Qantas", code:"QF" },
+    { zh:"维珍澳大利亚", en:"Virgin Australia", code:"VA" },
+    { zh:"捷星航空（澳洲）", en:"Jetstar", code:"JQ" },
+    { zh:"新西兰航空", en:"Air New Zealand", code:"NZ" },
+
+    // 中东 Middle East
+    { zh:"阿联酋航空", en:"Emirates", code:"EK" },
+    { zh:"卡塔尔航空", en:"Qatar Airways", code:"QR" },
+    { zh:"阿提哈德航空", en:"Etihad Airways", code:"EY" },
+    { zh:"沙特阿拉伯航空", en:"Saudia", code:"SV" },
+    { zh:"土耳其航空", en:"Turkish Airlines", code:"TK" },
+
+    // 欧洲 Europe
+    { zh:"英国航空", en:"British Airways", code:"BA" },
+    { zh:"维珍大西洋航空", en:"Virgin Atlantic", code:"VS" },
+    { zh:"汉莎航空", en:"Lufthansa", code:"LH" },
+    { zh:"瑞士国际航空", en:"SWISS", code:"LX" },
+    { zh:"奥地利航空", en:"Austrian Airlines", code:"OS" },
+    { zh:"布鲁塞尔航空", en:"Brussels Airlines", code:"SN" },
+    { zh:"法国航空", en:"Air France", code:"AF" },
+    { zh:"荷兰皇家航空", en:"KLM", code:"KL" },
+    { zh:"西班牙国家航空", en:"Iberia", code:"IB" },
+    { zh:"意大利航空", en:"ITA Airways", code:"AZ" },
+    { zh:"芬兰航空", en:"Finnair", code:"AY" },
+    { zh:"北欧航空", en:"SAS", code:"SK" },
+    { zh:"爱尔兰航空", en:"Aer Lingus", code:"EI" },
+    { zh:"葡萄牙航空", en:"TAP Air Portugal", code:"TP" },
+    { zh:"波兰航空", en:"LOT Polish Airlines", code:"LO" },
+    { zh:"冰岛航空", en:"Icelandair", code:"FI" },
+    { zh:"易捷航空", en:"easyJet", code:"U2" },
+    { zh:"瑞安航空", en:"Ryanair", code:"FR" },
+
+    // 北美 North America
+    { zh:"美国航空", en:"American Airlines", code:"AA" },
+    { zh:"达美航空", en:"Delta Air Lines", code:"DL" },
+    { zh:"联合航空", en:"United Airlines", code:"UA" },
+    { zh:"西南航空", en:"Southwest Airlines", code:"WN" },
+    { zh:"阿拉斯加航空", en:"Alaska Airlines", code:"AS" },
+    { zh:"捷蓝航空", en:"JetBlue", code:"B6" },
+    { zh:"加拿大航空", en:"Air Canada", code:"AC" },
+    { zh:"西捷航空", en:"WestJet", code:"WS" },
+
+    // 拉美 Latin America
+    { zh:"墨西哥航空", en:"Aeroméxico", code:"AM" },
+    { zh:"巴西南美航空", en:"LATAM Airlines", code:"LA" },
+    { zh:"哥伦比亚航空", en:"Avianca", code:"AV" },
+    { zh:"巴西戈尔航空", en:"GOL", code:"G3" },
+
+    // 非洲 Africa
+    { zh:"埃塞俄比亚航空", en:"Ethiopian Airlines", code:"ET" },
+    { zh:"肯尼亚航空", en:"Kenya Airways", code:"KQ" },
+    { zh:"南非航空", en:"South African Airways", code:"SA" },
+    { zh:"埃及航空", en:"EgyptAir", code:"MS" }
+  ];
+
+  const $ = (id)=>document.getElementById(id);
+
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function fmtTime(d){
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function setNow(){ $('nowTime').textContent = fmtTime(new Date()); }
+  setNow(); setInterval(setNow, 1000);
+
+  // fill datalist
+  const dl = $('airlines');
+  airlinesData.forEach(a=>{
+    const opt = document.createElement('option');
+    opt.value = `${a.zh} ${a.code} / ${a.en} ${a.code}`;
+    dl.appendChild(opt);
+  });
+
+  // baggage toggle
+  $('baggageCheck').addEventListener('change', ()=>{
+    const on = $('baggageCheck').checked;
+    $('bagSizeWrap').style.display = on ? '' : 'none';
+    $('bagWeightWrap').style.display = on ? '' : 'none';
+    if(!on){
+      $('bagWeight').value = '';
+      $('weightHint').textContent = '标准上限 23 kg / Standard limit 23 kg';
+      $('weightHint').className = 'hint';
+    }
+    syncPreview();
+  });
+
+  $('bagWeight').addEventListener('input', ()=>{
+    const w = parseFloat($('bagWeight').value);
+    if(!isNaN(w) && w > 23){
+      $('weightHint').textContent = '可能超重 / May be overweight (> 23 kg)';
+      $('weightHint').className = 'hint warn';
+    }else{
+      $('weightHint').textContent = '标准上限 23 kg / Standard limit 23 kg';
+      $('weightHint').className = 'hint';
+    }
+    syncPreview();
+  });
+
+  function clean(s){ return (s ?? '').toString().trim(); }
+
+  function getFormData(){
+    const baggageOn = $('baggageCheck').checked;
+    return {
+      flightType: $('flightType').value,
+      name: clean($('name').value),
+      docType: $('docType').value,
+      docNo: clean($('docNo').value),
+      airline: clean($('airlineInput').value),
+      flightNo: clean($('flightNo').value),
+      seatNo: clean($('seatNo').value),
+      gate: clean($('gate').value),
+      terminal: clean($('terminal').value),
+      baggageOn,
+      bagSize: baggageOn ? $('bagSize').value : '',
+      bagWeight: baggageOn ? clean($('bagWeight').value) : ''
+    };
+  }
+
+  function syncPreview(extra){
+    const data = getFormData();
+    const merged = { ...data, ...(extra||{}) };
+
+    $('pvType').textContent = merged.flightType === 'International'
+      ? '国际 / International'
+      : '国内 / Domestic';
+
+    $('pvAirline').textContent = merged.airline || '—';
+    $('pvFlightNo').textContent = merged.flightNo || '—';
+    $('pvName').textContent = merged.name || '—';
+
+    const docMap = {
+      "ID Card":"身份证 / ID Card",
+      "Passport":"护照 / Passport",
+      "Home Return Permit":"港澳通行证 / Home Return Permit",
+      "Taiwan Compatriot Permit":"台胞证 / Taiwan Compatriot Permit",
+      "Other":"其他 / Other",
+    };
+    $('pvDocType').textContent = docMap[merged.docType] || merged.docType || '—';
+    $('pvDocNo').textContent = merged.docNo || '—';
+
+    $('pvSeat').textContent = merged.seatNo || '—';
+    $('pvGate').textContent = merged.gate || '—';
+    $('pvTerminal').textContent = merged.terminal || '—';
+
+    if(merged.baggageOn){
+      const sizeMap = { Small:"小 / Small", Medium:"中 / Medium", Large:"大 / Large" };
+      const sizeText = sizeMap[merged.bagSize] || merged.bagSize;
+      const w = merged.bagWeight ? `${merged.bagWeight} kg` : '—';
+      $('pvBag').textContent = `${sizeText} · ${w}`;
+    }else{
+      $('pvBag').textContent = '否 / No';
+    }
+
+    if(merged.checkinNo){
+      $('checkinNo').textContent = merged.checkinNo;
+      $('barcodeText').textContent = merged.barcodeData;
+      $('issuedAt').textContent = merged.issuedAt;
+    }
+  }
+
+  // live update
+  ['flightType','name','docType','docNo','airlineInput','flightNo','seatNo','gate','terminal','bagSize']
+    .forEach(id=>{
+      $(id).addEventListener('input', ()=>syncPreview());
+      $(id).addEventListener('change', ()=>syncPreview());
+    });
+
+  syncPreview();
+
+  // Generate check-in code + barcode (CSX + random 4 digits)
+  function genCheckinNo(){
+    const n = Math.floor(1000 + Math.random()*9000);
+    return `CSX${n}`;
+  }
+  function makeBarcode(text){
+    try{
+      JsBarcode($('barcodeCanvas'), text, {
+        format: "CODE128",
+        displayValue: false,
+        margin: 6,
+        height: 68
+      });
+      return true;
+    }catch(e){
+      console.error(e);
+      return false;
+    }
+  }
+
+  let latestPayload = null;
+
+  $('genBtn').addEventListener('click', ()=>{
+    const data = getFormData();
+
+    const missing = [];
+    if(!data.name) missing.push('姓名 / Name');
+    if(!data.docNo) missing.push('证件编号 / Document No.');
+    if(!data.airline) missing.push('航司 / Airline');
+    if(!data.flightNo) missing.push('航班号 / Flight No.');
+
+    if(missing.length){
+      $('formHint').innerHTML = `<span class="warn">缺少：${missing.join('、')}</span>`;
+      $('status').textContent = 'INCOMPLETE';
+      return;
+    }
+
+    const checkinNo = genCheckinNo();
+    const issuedAt = fmtTime(new Date());
+    const barcodeData = checkinNo; // only CSX+4 digits
+
+    const ok = makeBarcode(barcodeData);
+    if(!ok){
+      $('formHint').innerHTML = `<span class="warn">【ERROR】生成失败 / Generation Failed</span>`;
+      $('status').textContent = 'ERROR';
+      return;
+    }
+
+    latestPayload = { ...data, checkinNo, issuedAt, barcodeData };
+    syncPreview(latestPayload);
+
+    $('pdfBtn').disabled = false;
+    $('formHint').innerHTML = `<span class="ok">已生成 / Generated</span>`;
+    $('status').textContent = 'GENERATED';
+  });
+
+  $('resetBtn').addEventListener('click', ()=>{
+    $('flightType').value = "Domestic";
+    ['name','docNo','airlineInput','flightNo','seatNo','gate','terminal','bagWeight'].forEach(id=>$(id).value='');
+    $('docType').value = 'ID Card';
+    $('baggageCheck').checked = false;
+    $('bagSize').value = 'Small';
+    $('bagSizeWrap').style.display = 'none';
+    $('bagWeightWrap').style.display = 'none';
+    $('weightHint').textContent = '标准上限 23 kg / Standard limit 23 kg';
+    $('weightHint').className = 'hint';
+
+    latestPayload = null;
+    $('checkinNo').textContent = '—';
+    $('barcodeText').textContent = '—';
+    $('issuedAt').textContent = '—';
+
+    ['pvType','pvAirline','pvFlightNo','pvName','pvDocType','pvDocNo','pvSeat','pvGate','pvTerminal','pvBag']
+      .forEach(id=>$(id).textContent='—');
+
+    const c = $('barcodeCanvas');
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,c.width,c.height);
+
+    $('pdfBtn').disabled = true;
+    $('formHint').textContent = '';
+    $('status').textContent = 'READY';
+  });
+
+  // Export PDF (A4 Landscape) using image capture (match page colors)
+  $('pdfBtn').addEventListener('click', async ()=>{
+    if(!latestPayload) return;
+
+    const card = $('card');
+
+    // boost contrast for export
+    card.classList.add('exporting');
+
+    // fixed width for consistent layout
+    const oldWidth = card.style.width;
+    card.style.width = '980px';
+
+    // IMPORTANT: force dark background to avoid washed-out PDF
+    const canvas = await html2canvas(card, {
+      backgroundColor: '#0b1220',
+      scale: 2,
+      useCORS: true
+    });
+
+    // restore
+    card.style.width = oldWidth;
+    card.classList.remove('exporting');
+
+    const imgData = canvas.toDataURL('image/png', 1.0);
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+
+    const W = 297, H = 210;
+    const margin = 10;
+    const maxW = W - margin*2;
+    const maxH = H - margin*2;
+
+    const pxToMm = 0.264583;
+    const imgWmm = canvas.width * pxToMm;
+    const imgHmm = canvas.height * pxToMm;
+
+    const ratio = Math.min(maxW / imgWmm, maxH / imgHmm);
+    const drawW = imgWmm * ratio;
+    const drawH = imgHmm * ratio;
+
+    const x = (W - drawW) / 2;
+    const y = (H - drawH) / 2;
+
+    pdf.addImage(imgData, 'PNG', x, y, drawW, drawH);
+    pdf.save(`CSX_CheckIn_${latestPayload.checkinNo}.pdf`);
+  });
+</script>
+</body>
+</html>
